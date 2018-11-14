@@ -1,15 +1,15 @@
 package br.com.hc3.ms.security.service;
 
-import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.SignatureAlgorithm;
+import br.com.hc3.ms.dto.UserPrincipalDTO;
+import io.jsonwebtoken.*;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.stereotype.Component;
 
 import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import java.io.IOException;
 import java.util.Date;
 
+@Component
 public class SecurityService {
 
     private static final long EXPIRATIONTIME = 864000000;
@@ -17,39 +17,47 @@ public class SecurityService {
     private static final String TOKEN_PREFIX = "Bearer";
     private static final String HEADER_STRING = "Authorization";
 
-    public static void addAuthentication(HttpServletResponse res, String username) {
-        String JWT = Jwts.builder()
-                .setSubject(username)
-                .setExpiration(new Date(System.currentTimeMillis() + EXPIRATIONTIME))
+    public String generateToken(Authentication authentication) {
+
+        UserPrincipalDTO userPrincipalDTO = (UserPrincipalDTO) authentication.getPrincipal();
+
+        Date now = new Date();
+        Date expiryDate = new Date(now.getTime() + EXPIRATIONTIME);
+
+        return Jwts.builder()
+                .setSubject(Long.toString(userPrincipalDTO.getId()))
+                .setIssuedAt(new Date())
+                .setExpiration(expiryDate)
                 .signWith(SignatureAlgorithm.HS512, SECRET)
                 .compact();
 
-        String token = TOKEN_PREFIX + " " + JWT;
-        res.addHeader(HEADER_STRING, token);
-
-        try {
-            res.getOutputStream().print(token);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
     }
 
-    public static Authentication getByToken(String token) {
-        String user = Jwts.parser()
+    public Long getUserIdFromJwt(String token) {
+        Claims claims = Jwts.parser()
                 .setSigningKey(SECRET)
-                .parseClaimsJws(token.replace(TOKEN_PREFIX, ""))
-                .getBody()
-                .getSubject();
+                .parseClaimsJws(token)
+                .getBody();
 
-        return user != null ? new UsernamePasswordAuthenticationToken(user, null, null) : null;
+        return Long.parseLong(claims.getSubject());
     }
 
-    public static Authentication getAuthentication(HttpServletRequest request) {
-        String token = request.getHeader(HEADER_STRING);
-        if (token != null) {
-            return getByToken(token);
+    public boolean validateToken(String authToken) {
+        try {
+            Jwts.parser().setSigningKey(SECRET).parseClaimsJws(authToken);
+            return true;
+        } catch (SignatureException ex) {
+            System.out.println("Invalid JWT signature");
+        } catch (MalformedJwtException ex) {
+            System.out.println("Invalid JWT token");
+        } catch (ExpiredJwtException ex) {
+            System.out.println("Expired JWT token");
+        } catch (UnsupportedJwtException ex) {
+            System.out.println("Unsupported JWT token");
+        } catch (IllegalArgumentException ex) {
+            System.out.println("JWT claims string is empty.");
         }
-        return null;
+        return false;
     }
 
 }

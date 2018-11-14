@@ -1,42 +1,87 @@
 package br.com.hc3.ms.security.config;
 
-import br.com.hc3.ms.security.filter.AuthFilter;
-import br.com.hc3.ms.security.filter.SecurityFilter;
+import br.com.hc3.ms.security.filter.JwtAuthenticationEntryPoint;
+import br.com.hc3.ms.security.filter.JwtAuthenticationFilter;
+import br.com.hc3.ms.service.UserService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
+import org.springframework.http.HttpStatus;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.config.BeanIds;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
+import org.springframework.security.config.annotation.method.configuration.EnableGlobalMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
-import org.springframework.security.core.userdetails.User;
-import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.core.userdetails.UserDetailsService;
-import org.springframework.security.provisioning.InMemoryUserDetailsManager;
+import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 @Configuration
 @EnableWebSecurity
+@EnableGlobalMethodSecurity(
+        securedEnabled = true,
+        jsr250Enabled = true,
+        prePostEnabled = true
+)
 public class SecurityConfig extends WebSecurityConfigurerAdapter {
 
-    protected void configure(HttpSecurity http) throws Exception {
-        http.csrf().disable().authorizeRequests()
-                .antMatchers("/home").permitAll()
-                .antMatchers(HttpMethod.POST,"/v1/login").permitAll()
-                .anyRequest().authenticated()
-                .and()
+    @Autowired
+    private UserService userService;
 
-                .addFilterBefore(new SecurityFilter("/login",authenticationManager()), UsernamePasswordAuthenticationFilter.class)
-                .addFilterBefore(new AuthFilter(),UsernamePasswordAuthenticationFilter.class);
+    @Autowired
+    private JwtAuthenticationEntryPoint jwtEntryPoint;
 
+    @Bean
+    public JwtAuthenticationFilter securityFilter() {
+        return new JwtAuthenticationFilter();
+    }
+
+    @Bean
+    public PasswordEncoder passwordEncoder() {
+        return new BCryptPasswordEncoder();
+    }
+
+    @Bean(BeanIds.AUTHENTICATION_MANAGER)
+    @Override
+    public AuthenticationManager authenticationManagerBean() throws Exception {
+        return super.authenticationManagerBean();
     }
 
     @Override
-    protected void configure(AuthenticationManagerBuilder auth) throws Exception {
-        // cria uma conta default
-        auth.inMemoryAuthentication()
-                .withUser("admin")
-                .password("password")
-                .roles("ADMIN");
+    public void configure(AuthenticationManagerBuilder authenticationManagerBuilder) throws Exception {
+        authenticationManagerBuilder
+                .userDetailsService(userService)
+                .passwordEncoder(passwordEncoder());
     }
+
+    @Override
+    protected void configure(HttpSecurity http) throws Exception {
+        http
+                .cors()
+                .and()
+                .csrf()
+                .disable()
+                .exceptionHandling()
+                .authenticationEntryPoint(jwtEntryPoint)
+                .and()
+                .sessionManagement()
+                .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+                .and()
+                .authorizeRequests()
+                .antMatchers(HttpMethod.POST,"/v1/customer")
+                .permitAll()
+                .antMatchers(HttpMethod.POST,"/v1/auth/signin")
+                .permitAll()
+                .anyRequest()
+                .authenticated();
+
+        http.addFilterBefore(securityFilter(), UsernamePasswordAuthenticationFilter.class);
+    }
+
+
+
 }

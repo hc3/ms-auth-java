@@ -1,11 +1,10 @@
 package br.com.hc3.ms.model;
 
 import lombok.Data;
+import lombok.Setter;
 
-import javax.persistence.Entity;
-import javax.persistence.GeneratedValue;
-import javax.persistence.GenerationType;
-import javax.persistence.Id;
+import javax.persistence.*;
+import java.util.List;
 
 @Data
 @Entity
@@ -14,22 +13,19 @@ public class User {
 	@Id
 	@GeneratedValue(strategy=GenerationType.AUTO)
 	private Long id;
-	
-	private String nickName;
-	
+	private String firstName;
+	private String lastName;
+	private String username;
 	private String email;
-	
 	private String password;
+	private boolean active;
 
-	public User() {
-
-	}
-
-	public User(String nickName, String email, String password) {
-		super();
-		this.nickName = nickName;
-		this.email = email;
-		this.password = password;
-	}
+	@ManyToMany
+	@JoinTable(
+			name="users_roles",
+			joinColumns = @JoinColumn(name="user_id", referencedColumnName = "id"),
+			inverseJoinColumns = @JoinColumn(name="role_id", referencedColumnName = "id")
+	)
+	private List<Role> roles;
 
 }
