@@ -27,6 +27,11 @@ public class UserPrincipalDTO implements UserDetails {
     private String password;
 
     private Collection<? extends GrantedAuthority> authorities;
+    
+    
+    public UserPrincipalDTO() {
+    	
+    }
 
     public UserPrincipalDTO(Long id, String name, String username, String email, String password, Collection<? extends GrantedAuthority> authorities) {
         this.id = id;
