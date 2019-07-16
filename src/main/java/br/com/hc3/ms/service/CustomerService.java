@@ -18,11 +18,9 @@ public class CustomerService extends AbstractService {
     @Autowired
     private PasswordEncoder passwordEncoder;
 
-    private Customer entity = new Customer();
-    private CustomerDTO dto = new CustomerDTO();
-
-    public ResponseEntity create(CustomerDTO dto) {
+    public ResponseEntity<?> create(CustomerDTO dto) {
         try {
+        	Customer entity = new Customer();
             entity = convert(dto,Customer.class);
             entity.getUser().setPassword(passwordEncoder.encode(dto.getUser().getPassword()));
             customerRepository.save(entity);
