@@ -14,8 +14,8 @@ public class CustomerController {
     private CustomerService customerService;
 
     @PostMapping
-    public ResponseEntity<?> create(@RequestBody CustomerDTO customerDTO) {
-        return customerService.create(customerDTO);
+    public ResponseEntity<?> create(@RequestBody CustomerDTO dto) {
+        return customerService.create(dto);
     }
 
     @PutMapping("/{id}")

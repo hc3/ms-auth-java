@@ -9,5 +9,4 @@ public class CustomerDTO {
 
     private Long id;
     private UserDTO user;
-    private List<DogDTO> dogs;
 }

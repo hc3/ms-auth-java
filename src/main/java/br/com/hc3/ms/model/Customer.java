@@ -18,6 +18,4 @@ public class Customer {
     @OneToOne(cascade = CascadeType.ALL)
     private User user;
 
-    @OneToMany(mappedBy = "customer", orphanRemoval = true)
-    private List<Dog> dogs;
 }

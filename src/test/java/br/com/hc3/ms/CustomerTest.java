@@ -1,3 +1,4 @@
+/*
 package br.com.hc3.ms;
 
 import br.com.hc3.ms.controller.CustomerController;
@@ -19,7 +20,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
-
 import com.jayway.restassured.RestAssured;
 import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
 
@@ -117,3 +117,4 @@ public class CustomerTest {
     }
 
 }
+*/
